@@ -1,5 +1,4 @@
 import React from 'react';
-
 const App: React.FC = () => {
   return (
     <div style={{ padding: '2rem', background: '#1a1a1a', color: '#fff', height: '100vh' }}>
