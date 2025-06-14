@@ -30,6 +30,13 @@ const agents = [
 ];
 
 const App: React.FC = () => {
+
+  const handleClick=()=>{
+    const container=document.getElementById('skynet-panel-container');
+    if(container)
+      document.body.removeChild(container);
+  }
+
   return (
     <div style={{
       width: '100%',
@@ -53,6 +60,8 @@ const App: React.FC = () => {
         </div>
         <div style={{ fontSize: '14px', color: '#a1a1aa' }}>Browse Agents</div>
       </div>
+
+      <button style={{height:"10px",width:"30px"}} onClick={handleClick}>BACK</button>
 
       {/* Agent Section */}
       <div style={{ padding: '16px' }}>
