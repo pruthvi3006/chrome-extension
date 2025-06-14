@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import logo from './assets/logo.png';
 import { faS, faGrip } from '@fortawesome/free-solid-svg-icons';
 import { createRoot } from 'react-dom/client';
 import App from './App';
@@ -56,7 +57,7 @@ const Launcher: React.FC = () => {
     height: '100vh',
     zIndex: '999999',
     borderLeft: '1px solid #444',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000000',
     transition: 'transform 0.3s ease',
     display: 'flex',
     flexDirection: 'row'
@@ -113,10 +114,10 @@ const Launcher: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '16px 0 0 16px',
-        background: '#2a2a2a',
-        width: '48px',
-        height: '64px',
+        borderRadius: '5px 0 0 5px',
+        background: '#000000',
+        width: '40px',
+        height: '60px',
         padding: '4px 0',
         cursor: 'default',
         zIndex: 999999,
@@ -125,20 +126,30 @@ const Launcher: React.FC = () => {
       }}
     >
       {/* Clickable logo */}
-      <div
-        onClick={handleClick}
-        onMouseEnter={() => setHoverLogo(true)}
-        onMouseLeave={() => setHoverLogo(false)}
-        style={{
-          cursor: 'pointer',
-          background: hoverLogo ? '#000' : 'transparent',
-          padding: '4px',
-          borderRadius: '6px',
-          transition: 'background 0.2s ease',
-        }}
-      >
-        <FontAwesomeIcon icon={faS} style={{ color: '#f0f0f0', fontSize: '18px' }} />
-      </div>
+     <div
+  onClick={handleClick}
+  onMouseEnter={() => setHoverLogo(true)}
+  onMouseLeave={() => setHoverLogo(false)}
+  style={{
+    cursor: 'pointer',
+    background: hoverLogo ? '#000' : 'transparent',
+    padding: '4px',
+    borderRadius: '6px',
+    transition: 'background 0.2s ease',
+  }}
+>
+  <img
+    src={logo}
+    alt="Skynet logo"
+    style={{
+      width: '20px',
+      height: '20px',
+      objectFit: 'contain',
+      filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.2))'
+    }}
+  />
+</div>
+
 
       {/* Draggable grip */}
       <div

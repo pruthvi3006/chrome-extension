@@ -1,164 +1,119 @@
-import React from 'react';
+// App.tsx
+import React, { useState } from 'react';
+import { faBolt, faPlay, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBolt, faCheckCircle, faChartLine, faPlay } from '@fortawesome/free-solid-svg-icons';
 
-const agents = [
-  {
-    title: 'Fact Check',
-    description: 'Verify online claims with confidence',
-    color: '#22c55e', // green
-    icon: faCheckCircle,
-  },
-  {
-    title: 'TL;DR',
-    description: 'Instant article & document summarizer',
-    color: '#ef4444', // red
-    icon: faBolt,
-  },
-  {
-    title: 'Executive Summary',
-    description: 'Transform complex content into clear summaries',
-    color: '#facc15', // yellow
-    icon: faChartLine,
-  },
-  {
-    title: 'YT ➔ Executive...',
-    description: 'Generates summaries of YouTube video transcripts',
-    color: '#f59e0b', // amber
-    icon: faChartLine,
-  }
-];
+const GEMINI_API_KEY = 'AIzaSyChH-baRHdB8HHq7NipOcCqWJ8ENXjN1sU';
 
-const App: React.FC = () => {
+const App = () => {
+  const [summaryResult, setSummaryResult] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleClick=()=>{
-    const container=document.getElementById('skynet-panel-container');
-    if(container)
-      document.body.removeChild(container);
-  }
+  const handleBack = () => {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({ action: 'closePanel' });
+    } else {
+      const container = document.getElementById('skynet-panel-container');
+      if (container) document.body.removeChild(container);
+    }
+  };
+
+  const handleSummarize = async () => {
+    setSummaryResult('Summarizing page...');
+    setIsLoading(true);
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab?.id) {
+        setSummaryResult('Error: Could not get active tab information.');
+        setIsLoading(false);
+        return;
+      }
+
+      const [{ result: pageText }] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => window.getSelection()?.toString() || document.body.innerText.slice(0, 3000),
+      });
+
+      if (!pageText) {
+        setSummaryResult('No text found on the page. Try selecting some text or ensure the page has readable content.');
+        setIsLoading(false);
+        return;
+      }
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: `Summarize this web content briefly and clearly:\n\n${pageText}` },
+                ],
+              },
+            ],
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        const errMsg = data?.error?.message || res.statusText;
+        throw new Error(errMsg);
+      }
+
+      setSummaryResult(data.candidates[0].content.parts[0].text);
+    } catch (error) {
+      console.error('Error during summarization:', error);
+      setSummaryResult(`An error occurred: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div style={{
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#1a1a1a',
-      color: 'white',
-      fontFamily: 'sans-serif',
-      overflowY: 'auto',
-    }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '16px',
-        borderBottom: '1px solid #3f3f46'
-      }}>
+    <div style={{ width: '100%', height: '100%', backgroundColor: '#1a1a1a', color: 'white', fontFamily: 'sans-serif', overflowY: 'auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #3f3f46' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '24px', height: '24px', borderRadius: '4px', backgroundColor: 'white' }}></div>
-          <span style={{ fontSize: '14px', fontWeight: 600 }}>MindStudio</span>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>SkyStudio</span>
         </div>
-        <div style={{ fontSize: '14px', color: '#a1a1aa' }}>Browse Agents</div>
+        <div style={{ fontSize: '14px', color: '#a1a1aa' }}>Summarize Page</div>
       </div>
 
-      <button style={{height:"10px",width:"30px"}} onClick={handleClick}>BACK</button>
+      <button
+        onClick={handleBack}
+        style={{ margin: '16px', background: 'transparent', border: '1px solid #3f3f46', color: '#ffffff', fontSize: '12px', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer' }}>
+        <FontAwesomeIcon icon={faChevronLeft} size="xs" /> BACK
+      </button>
 
-      {/* Agent Section */}
       <div style={{ padding: '16px' }}>
-        {/* Top Agent */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: '#27272a',
-          padding: '12px',
-          borderRadius: '8px',
-          marginBottom: '24px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              backgroundColor: '#22c55e',
-              color: 'white'
-            }}>
-              <FontAwesomeIcon icon={faCheckCircle} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '14px' }}>Fact Check</div>
-              <div style={{ fontSize: '12px', color: '#a1a1aa' }}>Verify online claims with confidence</div>
-            </div>
-          </div>
-          <button style={{
-            backgroundColor: '#3f3f46',
-            color: 'white',
-            fontSize: '12px',
-            padding: '4px 12px',
-            borderRadius: '9999px',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <FontAwesomeIcon icon={faPlay} /> Run
-          </button>
-        </div>
-
-        {/* Analyze Content */}
-        <div>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>Analyze Content</h3>
-          <p style={{ fontSize: '12px', color: '#a1a1aa', marginBottom: '12px' }}>Summarize or transform the content of sites.</p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {agents.slice(1).map((agent, index) => (
-              <div key={index} style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: '#27272a',
-                padding: '12px',
-                borderRadius: '8px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    backgroundColor: agent.color,
-                    color: 'white'
-                  }}>
-                    <FontAwesomeIcon icon={agent.icon} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '14px' }}>{agent.title}</div>
-                    <div style={{ fontSize: '12px', color: '#a1a1aa', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{agent.description}</div>
-                  </div>
-                </div>
-                <button style={{
-                  backgroundColor: '#3f3f46',
-                  color: 'white',
-                  fontSize: '12px',
-                  padding: '4px 12px',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <FontAwesomeIcon icon={faPlay} /> Run
-                </button>
+        <div style={{ backgroundColor: '#27272a', padding: '12px', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ backgroundColor: '#ef4444', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FontAwesomeIcon icon={faBolt} size="lg" />
               </div>
-            ))}
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '14px' }}>Summarize Page</div>
+                <div style={{ fontSize: '12px', color: '#a1a1aa' }}>Get a concise summary of this page</div>
+              </div>
+            </div>
+            <button
+              onClick={handleSummarize}
+              disabled={isLoading}
+              style={{ backgroundColor: isLoading ? '#5a5a5a' : '#3f3f46', color: 'white', fontSize: '12px', padding: '6px 12px', borderRadius: '9999px', border: 'none', cursor: isLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {isLoading ? 'Summarizing...' : <><FontAwesomeIcon icon={faPlay} size="xs" /> Run</>}
+            </button>
           </div>
+          {summaryResult && (
+            <div style={{ marginTop: '12px', backgroundColor: '#1f1f1f', padding: '8px', borderRadius: '6px', fontSize: '12px', color: '#e0e0e0', whiteSpace: 'pre-wrap' }}>
+              {summaryResult}
+            </div>
+          )}
         </div>
       </div>
     </div>
