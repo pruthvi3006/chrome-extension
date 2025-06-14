@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faS, faGrip } from '@fortawesome/free-solid-svg-icons';
-
+import { createRoot } from 'react-dom/client';
+import App from './App';
 const Launcher: React.FC = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -34,7 +35,6 @@ const Launcher: React.FC = () => {
       document.removeEventListener('mouseup', onMouseUp);
     };
   }, [dragging]);
-
   const handleClick = () => {
     const existing = document.getElementById('skynet-panel-container');
     if (existing) {
@@ -52,15 +52,11 @@ const Launcher: React.FC = () => {
     container.style.zIndex = '999999';
     container.style.borderLeft = '1px solid #444';
     container.style.backgroundColor = '#1a1a1a';
-
-    const iframe = document.createElement('iframe');
-    iframe.src = chrome.runtime.getURL('iframe.html');
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = 'none';
-
-    container.appendChild(iframe);
+    
     document.body.appendChild(container);
+    
+    const root = createRoot(container);
+    root.render(<App />);
   };
 
   return (
