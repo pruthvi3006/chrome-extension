@@ -36,28 +36,71 @@ const Launcher: React.FC = () => {
     };
   }, [dragging]);
   const handleClick = () => {
-    const existing = document.getElementById('skynet-panel-container');
-    if (existing) {
-      existing.remove();
-      return;
-    }
+  const existing = document.getElementById('skynet-panel-container');
+  if (existing) {
+    existing.classList.remove('skynet-slide-in');
+    existing.classList.add('skynet-slide-out');
+    setTimeout(() => existing.remove(), 300); // Wait for animation
+    return;
+  }
 
-    const container = document.createElement('div');
-    container.id = 'skynet-panel-container';
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.right = '0';
-    container.style.width = '400px';
-    container.style.height = '100vh';
-    container.style.zIndex = '999999';
-    container.style.borderLeft = '1px solid #444';
-    container.style.backgroundColor = '#1a1a1a';
-    
-    document.body.appendChild(container);
-    
-    const root = createRoot(container);
-    root.render(<App />);
-  };
+  // Create container
+  const container = document.createElement('div');
+  container.id = 'skynet-panel-container';
+  container.className = 'skynet-slide-in';
+  Object.assign(container.style, {
+    position: 'fixed',
+    top: '0',
+    right: '0',
+    width: '400px',
+    height: '100vh',
+    zIndex: '999999',
+    borderLeft: '1px solid #444',
+    backgroundColor: '#1a1a1a',
+    transition: 'transform 0.3s ease',
+    display: 'flex',
+    flexDirection: 'row'
+  });
+
+  // Create resizer
+  const resizer = document.createElement('div');
+  Object.assign(resizer.style, {
+    width: '5px',
+    cursor: 'ew-resize',
+    backgroundColor: '#333',
+    height: '100%',
+    position: 'relative'
+  });
+
+  resizer.addEventListener('mousedown', initResize);
+
+  function initResize(e:any) {
+    e.preventDefault();
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResize);
+  }
+
+  function resize(e:any) {
+    const newWidth = window.innerWidth - e.clientX;
+    container.style.width = `${Math.max(300, newWidth)}px`;
+  }
+
+  function stopResize() {
+    document.removeEventListener('mousemove', resize);
+    document.removeEventListener('mouseup', stopResize);
+  }
+
+  container.appendChild(resizer);
+  document.body.appendChild(container);
+
+  const panelContent = document.createElement('div');
+  panelContent.style.flex = '1';
+  panelContent.style.height = '100%';
+
+  container.appendChild(panelContent);
+  const root = createRoot(panelContent);
+  root.render(<App />);
+};
 
   return (
     <div
