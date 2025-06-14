@@ -17,35 +17,24 @@ const App = () => {
       if (container) document.body.removeChild(container);
     }
   };
-
   const handleSummarize = async () => {
     setSummaryResult('Summarizing page...');
-    setIsLoading(true);
-
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) {
-        setSummaryResult('Error: Could not get active tab information.');
-        setIsLoading(false);
-        return;
-      }
-
-      const [{ result: pageText }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => window.getSelection()?.toString() || document.body.innerText.slice(0, 3000),
-      });
+    setIsLoading(true);    try {
+      // Get the text directly since we're in the content script context
+      const pageText = window.getSelection()?.toString() || document.body.innerText.slice(0, 3000);
 
       if (!pageText) {
         setSummaryResult('No text found on the page. Try selecting some text or ensure the page has readable content.');
         setIsLoading(false);
         return;
-      }
-
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      }      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_API_KEY
+          },
           body: JSON.stringify({
             contents: [
               {
@@ -58,14 +47,16 @@ const App = () => {
         }
       );
 
-      const data = await res.json();
-
-      if (!res.ok || !data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      const data = await res.json();      if (!res.ok) {
         const errMsg = data?.error?.message || res.statusText;
         throw new Error(errMsg);
       }
 
-      setSummaryResult(data.candidates[0].content.parts[0].text);
+      if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('No summary generated. The API response was empty.');
+      }
+
+      setSummaryResult(data.candidates[0].content.parts[0].text.trim());
     } catch (error) {
       console.error('Error during summarization:', error);
       setSummaryResult(`An error occurred: ${error instanceof Error ? error.message : String(error)}`);

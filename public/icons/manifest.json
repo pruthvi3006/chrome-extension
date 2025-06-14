@@ -11,7 +11,7 @@
     "<all_urls>"
   ],
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "iframe.html"
   },
   "content_scripts": [
     {
