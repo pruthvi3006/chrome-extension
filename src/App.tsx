@@ -10,12 +10,9 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleBack = () => {
-    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-      chrome.runtime.sendMessage({ action: 'closePanel' });
-    } else {
+    
       const container = document.getElementById('skynet-panel-container');
       if (container) document.body.removeChild(container);
-    }
   };
   const handleSummarize = async () => {
     setSummaryResult('Summarizing page...');
