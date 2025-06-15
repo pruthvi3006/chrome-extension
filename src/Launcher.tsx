@@ -40,71 +40,78 @@ const Launcher: React.FC = () => {
     };
   }, [dragging]);
   const handleClick = () => {
-    const existing = document.getElementById("skynet-panel-container");
-    if (existing) {
-      existing.classList.remove("skynet-slide-in");
-      existing.classList.add("skynet-slide-out");
-      setTimeout(() => existing.remove(), 300); // Wait for animation
-      return;
-    }
+  const existing = document.getElementById("skynet-panel-container");
+  if (existing) {
+    existing.classList.remove("skynet-slide-in");
+    existing.classList.add("skynet-slide-out");
+    document.body.style.marginRight = ""; // reset margin
+    document.body.style.transition = "margin 0.3s ease";
+    setTimeout(() => existing.remove(), 300); // Wait for animation
+    return;
+  }
 
-    // Create container
-    const container = document.createElement("div");
-    container.id = "skynet-panel-container";
-    container.className = "skynet-slide-in";
-    Object.assign(container.style, {
-      position: "fixed",
-      top: "0",
-      right: "0",
-      width: "400px",
-      height: "100vh",
-      zIndex: "999999",
-      borderLeft: "1px solid #444",
-      backgroundColor: "#000000",
-      transition: "transform 0.3s ease",
-      display: "flex",
-      flexDirection: "row",
-    });
+   const container = document.createElement("div");
+  container.id = "skynet-panel-container";
+  container.className = "skynet-slide-in";
+  const initialWidth = 400;
+
+  Object.assign(container.style, {
+    position: "fixed",
+    top: "0",
+    right: "0",
+    width: `${initialWidth}px`,
+    height: "100vh",
+    zIndex: "999999",
+    borderLeft: "1px solid #444",
+    backgroundColor: "#000000",
+    transition: "transform 0.3s ease",
+    display: "flex",
+    flexDirection: "row",
+  });
+  // Adjust page content margin
+  document.body.style.marginRight = `${initialWidth}px`;
+  document.body.style.transition = "margin 0.3s ease";
 
     // Create resizer
-    const resizer = document.createElement("div");
-    Object.assign(resizer.style, {
-      width: "5px",
-      cursor: "ew-resize",
-      backgroundColor: "#333",
-      height: "100%",
-      position: "relative",
-    });
+  const resizer = document.createElement("div");
+  Object.assign(resizer.style, {
+    width: "5px",
+    cursor: "ew-resize",
+    backgroundColor: "#333",
+    height: "100%",
+    position: "relative",
+  });
 
-    resizer.addEventListener("mousedown", initResize);
 
-    function initResize(e: any) {
-      e.preventDefault();
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResize);
-    }
+  resizer.addEventListener("mousedown", initResize);
 
-    function resize(e: any) {
-      const newWidth = window.innerWidth - e.clientX;
-      container.style.width = `${Math.max(300, newWidth)}px`;
-    }
-
+    function initResize(e: MouseEvent) {
+    e.preventDefault();
+    document.addEventListener("mousemove", resize);
+    document.addEventListener("mouseup", stopResize);
+  }
+    function resize(e: MouseEvent) {
+    const newWidth = Math.max(300, window.innerWidth - e.clientX);
+    container.style.width = `${newWidth}px`;
+    document.body.style.marginRight = `${newWidth}px`;
+  }
     function stopResize() {
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResize);
-    }
+    document.removeEventListener("mousemove", resize);
+    document.removeEventListener("mouseup", stopResize);
+  }
+
 
     container.appendChild(resizer);
-    document.body.appendChild(container);
+  document.body.appendChild(container);
 
-    const panelContent = document.createElement("div");
-    panelContent.style.flex = "1";
-    panelContent.style.height = "100%";
+  const panelContent = document.createElement("div");
+  panelContent.style.flex = "1";
+  panelContent.style.height = "100%";
 
-    container.appendChild(panelContent);
-    const root = createRoot(panelContent);
-    root.render(<App />);
-  };
+  container.appendChild(panelContent);
+  const root = createRoot(panelContent);
+  root.render(<App />);
+};
 
   return (
     <div
@@ -131,15 +138,12 @@ const Launcher: React.FC = () => {
       {/* Clickable logo */}
       <div
         onClick={handleClick}
-        onMouseEnter={() => setHoverLogo(true)}
-        onMouseLeave={() => setHoverLogo(false)}
         style={{
-          cursor: "pointer",
-          background: hoverLogo ? "#000" : "transparent",
-          padding: "4px",
-          borderRadius: "6px",
-          transition: "background 0.2s ease",
-        }}
+  cursor: "pointer",
+  padding: "4px",
+  borderRadius: "6px",
+}}
+
       >
         {" "}
         <img
@@ -165,6 +169,7 @@ const Launcher: React.FC = () => {
           alignItems: "center",
           justifyContent: "center",
           cursor: "ns-resize",
+          marginTop: "-12px", // shifts it slightly up
         }}
       >
         <FontAwesomeIcon
