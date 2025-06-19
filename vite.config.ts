@@ -20,4 +20,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  define: {
+    global: "globalThis",
+  },
 });

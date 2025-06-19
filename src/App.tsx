@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { faBolt, faPlay, faChevronLeft, faFeather, faFileAlt, faSearch, faXmark, faCirclePlay } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Web3Auth } from "@web3auth/modal";
-import { CHAIN_NAMESPACES } from "@web3auth/base";
 
 interface Agent {
   subnet_name: string;
@@ -22,16 +21,10 @@ const App = () => {
     const initWeb3Auth = async () => {
       try {
         const web3auth = new Web3Auth({
-          clientId: "BEglQSgt4cUWcj6SKRdu5QkOXTsePmMcusG5EAoyjyOYKlVRjIF1iCNnMOTfpzCiunHRrMui8TIwQPXdkQ8Yxuk", // Example client ID - replace with yours
-          web3AuthNetwork: "mainnet",
-          chainConfig: {
-            chainNamespace: CHAIN_NAMESPACES.EIP155,
-            chainId: "0x1", // Ethereum Mainnet
-            rpcTarget: "https://rpc.ankr.com/eth", // Example public RPC endpoint
-          },
-          authMode: "DAPP",
+          clientId: "BDvSVO5JxE88zTsACm_02A6SzTpcSMKUFtflalmoyoua7pYyXD83L-z4QJZa_lgneZbSjPIfNMtxaARAmjg4-JY", // Example client ID - replace with yours
+          web3AuthNetwork: "sapphire_devnet",
           uiConfig: {
-            theme: "dark",
+            theme:{primary:"#000"},
             loginMethodsOrder: ["google", "facebook"]
           }
         });
@@ -45,19 +38,38 @@ const App = () => {
 
     initWeb3Auth();
   }, []);
-
+  const logoSrc = typeof chrome !== "undefined" && chrome.runtime?.getURL
+  ? chrome.runtime.getURL("icons/logo.png")
+  : "icons/logo.png";
   useEffect(() => {
-    fetch('http://localhost:3000/')
-      .then(response => response.json())
-      .then(data => {
+    const fetchAgents = async () => {
+      if (!isLoggedIn) {
+        setAgents([]);
+        return;
+      }
+
+      setIsLoading('Fetching agents...');
+      try {
+        const response = await fetch('http://localhost:3000/');
+        if (!response.ok) {
+          // throw new Error(HTTP error! status: ${response.status});
+        }
+        const data = await response.json();
         setAgents(data.map((agent: any) => ({
           subnet_name: agent.subnet_name,
           description: agent.description,
           subnet_url: agent.subnet_url
         })));
-      })
-      .catch(error => console.error('Error fetching agents:', error));
-  }, []);
+      } catch (error) {
+        console.error('Error fetching agents:', error);
+        setAgents([]);
+      } finally {
+        setIsLoading(null);
+      }
+    };
+
+    fetchAgents();
+  }, [isLoggedIn]); // Re-fetch when login status changes
 
   const handleLogin = async () => {
     if (!web3auth) {
@@ -111,7 +123,7 @@ const App = () => {
     <div style={{ width: '100%', height: '100%', backgroundColor: '#1a1a1a', color: 'white', fontFamily: 'sans-serif', overflowY: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #3f3f46' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src={chrome.runtime.getURL("icons/logo.png")} alt="SkyStudio Logo" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
+          <img src={logoSrc} alt="SkyStudio Logo" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
           <span style={{ fontSize: '14px', fontWeight: 600 }}>SkyAgents Hub</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
