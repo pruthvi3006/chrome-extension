@@ -1,0 +1,52 @@
+.skynet-launcher {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999999;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.skynet-launcher:hover {
+  transform: translateY(-50%) scale(1.1);
+}
+
+.skynet-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  background-color: #1a1a1a;
+  z-index: 999998;
+  transition: right 0.3s ease;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.skynet-slide-in {
+  right: 0;
+}
+
+.skynet-slide-out {
+  right: -400px;
+}
+
+.skynet-grip {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 60px;
+  background-color: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  border-radius: 4px 0 0 4px;
+}
+
+.skynet-grip:active {
+  cursor: grabbing;
+}
