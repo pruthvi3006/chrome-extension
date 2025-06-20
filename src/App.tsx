@@ -42,34 +42,31 @@ const App = () => {
   ? chrome.runtime.getURL("icons/logo.png")
   : "icons/logo.png";
   useEffect(() => {
-    const fetchAgents = async () => {
-      if (!isLoggedIn) {
-        setAgents([]);
-        return;
+  const fetchAgents = async () => {
+    setIsLoading('Fetching agents...');
+    try {
+      const response = await fetch('http://localhost:3000/');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      const data = await response.json();
+      setAgents(data.map((agent: any) => ({
+        subnet_name: agent.subnet_name,
+        description: agent.description,
+        subnet_url: agent.subnet_url
+      })));
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      setAgents([]);
+    } finally {
+      setIsLoading(null);
+    }
+  };
 
-      setIsLoading('Fetching agents...');
-      try {
-        const response = await fetch('http://localhost:3000/');
-        if (!response.ok) {
-          // throw new Error(HTTP error! status: ${response.status});
-        }
-        const data = await response.json();
-        setAgents(data.map((agent: any) => ({
-          subnet_name: agent.subnet_name,
-          description: agent.description,
-          subnet_url: agent.subnet_url
-        })));
-      } catch (error) {
-        console.error('Error fetching agents:', error);
-        setAgents([]);
-      } finally {
-        setIsLoading(null);
-      }
-    };
+  fetchAgents();
+}, []); // 👈 Empty dependency — only run once
 
-    fetchAgents();
-  }, [isLoggedIn]); // Re-fetch when login status changes
+      
 
   const handleLogin = async () => {
     if (!web3auth) {
@@ -216,7 +213,7 @@ const App = () => {
                   }}
                 >
                   <FontAwesomeIcon icon={faCirclePlay} />
-                  {isLoggedIn ? 'Run Agent' : 'Login Required'}
+                  {isLoggedIn ? 'Run' : 'Login Required'}
                 </button>
               </div>
               {results[agent.subnet_name] && (
