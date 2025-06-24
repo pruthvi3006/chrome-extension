@@ -2,11 +2,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    nodePolyfills(),
+  ],
   build: {
     rollupOptions: {
       input: {
@@ -15,6 +19,7 @@ export default defineConfig({
       },
       output: {
         entryFileNames: '[name].js',
+        format: 'iife', // Ensures output is IIFE, not ES module
       },
     },
     outDir: 'dist',
@@ -22,5 +27,10 @@ export default defineConfig({
   },
   define: {
     global: "globalThis",
+  },
+  resolve: {
+    alias: {
+      buffer: 'buffer',
+    },
   },
 });

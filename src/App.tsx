@@ -64,7 +64,7 @@ const App = () => {
   };
 
   fetchAgents();
-}, []); // 👈 Empty dependency — only run once
+}, []); 
 
       
 
