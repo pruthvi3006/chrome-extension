@@ -3,6 +3,9 @@ import { faBolt, faPlay, faChevronLeft, faFeather, faFileAlt, faSearch, faXmark,
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Web3Auth } from "@web3auth/modal";
 
+// Add TypeScript declaration for chrome extension APIs
+declare const chrome: typeof globalThis.chrome & { runtime?: { getURL?: (path: string) => string } };
+
 interface Agent {
   subnet_name: string;
   description: string;
@@ -20,15 +23,11 @@ const App = () => {
   useEffect(() => {
     const initWeb3Auth = async () => {
       try {
+        // Minimal config for Web3Auth
         const web3auth = new Web3Auth({
-          clientId: "BDvSVO5JxE88zTsACm_02A6SzTpcSMKUFtflalmoyoua7pYyXD83L-z4QJZa_lgneZbSjPIfNMtxaARAmjg4-JY", // Example client ID - replace with yours
-          web3AuthNetwork: "sapphire_devnet",
-          uiConfig: {
-            theme:{primary:"#000"},
-            loginMethodsOrder: ["google", "facebook"]
-          }
+          clientId: "BCU6qYdYUad5TLmmJwLE3k4TGml3cVUgQRAuGcBmBpIKzQpw3pnr7DcxaKU5e5wGH_WXMFS5tj5wJBKuvuc2WkU",
+          web3AuthNetwork: "sapphire_devnet"
         });
-
         await web3auth.init();
         setWeb3auth(web3auth);
       } catch (error) {
@@ -42,31 +41,32 @@ const App = () => {
   ? chrome.runtime.getURL("icons/logo.png")
   : "icons/logo.png";
   useEffect(() => {
-  const fetchAgents = async () => {
-    setIsLoading('Fetching agents...');
-    try {
-      const response = await fetch('http://localhost:3000/');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    const fetchAgents = async () => {
+      setIsLoading('Fetching agents...');
+      try {
+        const response = await fetch('https://skynetagent-c0n525.stackos.io/api/agents');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Fetched agents response:', data); // Debug log
+        // Correctly extract agents from data.data.agents
+        const agentList = Array.isArray(data?.data?.agents) ? data.data.agents : [];
+        setAgents(agentList.map((agent: any) => ({
+          subnet_name: agent.name || agent.subnet_name || '',
+          description: agent.description || '',
+          subnet_url: agent.id || '' // store id for later use
+        })));
+      } catch (error) {
+        console.error('Error fetching agents:', error);
+        setAgents([]);
+      } finally {
+        setIsLoading(null);
       }
-      const data = await response.json();
-      setAgents(data.map((agent: any) => ({
-        subnet_name: agent.subnet_name,
-        description: agent.description,
-        subnet_url: agent.subnet_url
-      })));
-    } catch (error) {
-      console.error('Error fetching agents:', error);
-      setAgents([]);
-    } finally {
-      setIsLoading(null);
-    }
-  };
+    };
 
-  fetchAgents();
-}, []); 
-
-      
+    fetchAgents();
+  }, []); 
 
   const handleLogin = async () => {
     if (!web3auth) {
@@ -94,15 +94,27 @@ const App = () => {
     }
   };
 
-  const handleRunAgent = async (agentName: string, promptFn: (text: string) => string) => {
+  // Fetch and display agent workflow (subnet_list) when Run is clicked
+  const handleRunAgent = async (agentName: string, agentId: string) => {
     if (!isLoggedIn) {
       alert("Please login to use the agents");
       return;
     }
-    const content = document.body.innerHTML;
-    console.log(content);
     setIsLoading(agentName);
     setResults(prev => ({ ...prev, [agentName]: 'Processing...' }));
+    try {
+      const response = await fetch(`https://skynetagent-c0n525.stackos.io/agents/${agentId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      // Display the subnet_list (workflow) as JSON for now
+      setResults(prev => ({ ...prev, [agentName]: JSON.stringify(data.subnet_list, null, 2) }));
+    } catch (error) {
+      setResults(prev => ({ ...prev, [agentName]: 'Error fetching workflow' }));
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   const handleBack = () => {
@@ -197,7 +209,7 @@ const App = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleRunAgent(agent.subnet_name, () => "")}
+                  onClick={() => handleRunAgent(agent.subnet_name, agent.subnet_url)}
                   disabled={!isLoggedIn}
                   style={{
                     background: isLoggedIn ? '#3f3f46' : '#27272a',
@@ -217,7 +229,7 @@ const App = () => {
                 </button>
               </div>
               {results[agent.subnet_name] && (
-                <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#1a1a1a', borderRadius: '4px', fontSize: '12px' }}>
+                <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#1a1a1a', borderRadius: '4px', fontSize: '12px', whiteSpace: 'pre-wrap' }}>
                   {results[agent.subnet_name]}
                 </div>
               )}
